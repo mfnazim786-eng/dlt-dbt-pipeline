@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
+# DLT local state and data
+# Ignore project-level configuration secrets
+.dlt/secrets.toml
+# Ignore local database files and their write-ahead logs
+*.duckdb
+*.duckdb.wal
+# Ignore runtime-generated pipeline working directories
+local_mongo/
+duckdb_full_to_bigquery/
+
+# DBT generated folders
+target/
+dbt_packages/
+logs/
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+
+# Secrets and credentials
+# IMPORTANT: Never commit your secrets!
+# This will ignore your GCP service account key
+*.json
+
+# IDE and OS-specific files
+.idea/
+.vscode/
+.DS_Store

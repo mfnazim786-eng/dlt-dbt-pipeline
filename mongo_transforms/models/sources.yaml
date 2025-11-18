@@ -1,0 +1,49 @@
+# mongo_transforms/models/sources.yml
+
+version: 2
+
+sources:
+  - name: mongo_raw # An arbitrary name for the source group
+    schema: mongo_select # This MUST match the 'dataset_name' from your dlt pipeline
+    tables:
+      - name: houses
+      - name: brands
+      - name: franchise_cb_sale
+      - name: franchise_cb_sale__discount_ids
+      - name: franchise_cb_sale__supervised_by_ids
+      - name: franchise_cb_sale__discount_ids__list
+      - name: franchise_cb_sale__shades
+      - name: item_sale
+      - name: item_sale__supervised_by_ids
+      - name: franchise_c_bs
+      - name: franchise_c_bs__shades
+      - name: sales
+      - name: sales__supervised_by_ids
+      - name: sales_cb
+      - name: sales_cb__supervised_by_ids
+      - name: franchise_cb_prices
+      - name: access_roles
+      - name: access_roles__business_unit
+      - name: access_roles__supervised_by
+      - name: access_roles__supervisor_for
+      - name: brand_c_bs
+      - name: customers
+      - name: items
+      - name: category_c_bs
+      - name: cities
+      - name: currencies
+      - name: malls
+      - name: markets
+      - name: product_c_bs
+      - name: sub_category_c_bs
+      - name: shops
+      - name: users
+      - name: users__location__market
+      - name: users__location__business_unit
+      - name: users__channel
+      - name: discounts
+      - name: checkins
+      - name: checkins__previous_check_in__spent_days
+      - name: checkins__previous_check_in__spent_days_in_current_month
+      - name: targets
+      - name: targets_cb

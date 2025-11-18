@@ -1,0 +1,3 @@
+For Manual Run
+Remove local_mongo folder and loacalmongo.duckdb file.
+change date ranges and run the script (manual one)

@@ -1,0 +1,9 @@
+pymongo>=3
+dlt[duckdb,workspace,bigquery]>=0.5.1
+dbt-core
+dbt-duckdb
+google-cloud-bigquery-storage
+google-cloud-storage
+google-auth
+fastapi
+uvicorn[standard]
