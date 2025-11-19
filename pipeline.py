@@ -9,7 +9,6 @@ try:
 except ImportError:
     from mongodb import mongodb, mongodb_collection
 import dlt.destinations
-# import json
 import duckdb
 from dlt import dbt
 import datetime
@@ -18,7 +17,6 @@ import os
 import logging
 import tempfile
 from bigquery_handler import update_job_status
-import sys
 
 logging.basicConfig(
     level=logging.INFO,
@@ -30,35 +28,6 @@ GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME")
 # DUCKDB_FILE_NAME = "local_mongo.duckdb"
 DUCKDB_FILE_NAME = os.getenv("DUCKDB_FILE_NAME") 
 
-def download_from_gcs(bucket_name, source_blob_name, destination_file_name):
-    """Downloads a file from the bucket."""
-    try:
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(source_blob_name)
-        if blob.exists():
-            logging.info(f"Downloading {source_blob_name} from bucket {bucket_name}...")
-            blob.download_to_filename(destination_file_name)
-            logging.info("Download complete.")   
-        else:
-            logging.warning(f"{source_blob_name} does not exist in the bucket. A new database will be created.")
-    except Exception as e:
-        logging.error(f"Failed to download from GCS: {e}")
-        raise
-        
-def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
-    """Uploads a file to the bucket."""
-    try:
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(destination_blob_name)
-        logging.info(f"Uploading {source_file_name} to bucket {bucket_name}...")
-        blob.upload_from_filename(source_file_name)
-        logging.info("Upload complete.")
-    except Exception as e:
-        logging.error(f"Failed to upload to GCS: {e}")
-        raise
-
 
 # --- STAGE 1: LOAD DATA FROM MONGODB TO DUCKDB ---
 def load_mongo_to_duckdb(pipeline: Pipeline) -> LoadInfo:
@@ -66,20 +35,15 @@ def load_mongo_to_duckdb(pipeline: Pipeline) -> LoadInfo:
     Loads collections from the MongoDB database specified in config.toml into the DuckDB destination.
     """
     logging.info("\n--- STAGE 1: Loading data from MongoDB to DuckDB ---")
-
     source = mongodb()
 
     incremental_config = {
-        # "franchiseCBSale": {"cursor": "createdBy.date", "initial_start_days_ago": 10, "end_days_ago": 0},
         "franchiseCBSale": {"cursor": "createdTimeByServer", "initial_start_days_ago": 10, "end_days_ago": 0},
-        # "salesCB":         {"cursor": "createdBy.date", "initial_start_days_ago": 10, "end_days_ago": 0},
         "salesCB":         {"cursor": "createdTimeByServer", "initial_start_days_ago": 10, "end_days_ago": 0},
-        "targetsCB":       {"cursor": "createdBy.date", "initial_start_days_ago": 45, "end_days_ago": 0},
-        "targets":         {"cursor": "createdBy.date", "initial_start_days_ago": 45, "end_days_ago": 0},
-        "discounts":       {"cursor": "createdBy.date", "initial_start_days_ago": 30, "end_days_ago": 0},
-        # "itemSale":        {"cursor": "createdBy.date", "initial_start_days_ago": 10, "end_days_ago": 0},
+        "targetsCB":       {"cursor": "editedBy.date", "initial_start_days_ago": 45, "end_days_ago": 0},
+        "targets":         {"cursor": "editedBy.date", "initial_start_days_ago": 45, "end_days_ago": 0},
+        "discounts":       {"cursor": "editedBy.date", "initial_start_days_ago": 30, "end_days_ago": 0},
         "itemSale":        {"cursor": "createdTimeByServer", "initial_start_days_ago": 10, "end_days_ago": 0},
-        # "sales":           {"cursor": "createdBy.date", "initial_start_days_ago": 10, "end_days_ago": 0},
         "sales":           {"cursor": "createdTimeByServer", "initial_start_days_ago": 10, "end_days_ago": 0},
         "checkins":        {"cursor": "lastCheckIn",    "initial_start_days_ago": 10, "end_days_ago": 0}
     }
@@ -88,18 +52,13 @@ def load_mongo_to_duckdb(pipeline: Pipeline) -> LoadInfo:
         initial_start_days_ago = config["initial_start_days_ago"]
         cursor_column = config["cursor"]
         start_from_date = datetime.date.today() - datetime.timedelta(days=initial_start_days_ago)
-        initial_start_date = datetime.datetime(
-            start_from_date.year, start_from_date.month, start_from_date.day, tzinfo=datetime.timezone.utc
-        )
-
+        initial_start_date = datetime.datetime(start_from_date.year, start_from_date.month, start_from_date.day, tzinfo=datetime.timezone.utc)
         end_days_ago = config["end_days_ago"]
         end_from_date = datetime.date.today() - datetime.timedelta(days=end_days_ago)
         end_date = datetime.datetime.combine(end_from_date, datetime.time.max, tzinfo=datetime.timezone.utc)
-
         logging.info(f"Applying hints to '{resource_name}': loading from {initial_start_date.date()} up to {end_date.date()}")
 
         resource = source.resources[resource_name]
-
         resource.apply_hints(
             primary_key="_id",
             incremental=dlt.sources.incremental(
@@ -109,9 +68,8 @@ def load_mongo_to_duckdb(pipeline: Pipeline) -> LoadInfo:
             )
         )
 
-    replace_collections = ["houses","brands","franchiseCBs","franchiseCBPrices","items","brandCBs","access_roles","customers","categoryCBs","cities",
-                           "currencies","malls","markets","productCBs","shops","subCategoryCBs","users"]
-    
+    replace_collections = ["houses","brands","franchiseCBs","franchiseCBPrices","items","brandCBs","access_roles","customers","categoryCBs","cities","currencies","malls","markets",
+                           "productCBs","shops","subCategoryCBs","users"]
     column_hints = {
         "cities": {
             "logo": {"data_type": "text"}
@@ -159,13 +117,8 @@ def transform_data_in_duckdb(dbt_pipeline: Pipeline) -> None:
         pipeline=dbt_pipeline,
         package_location="mongo_transforms"
     )
-
     # The run_all() method executes 'dbt run'
-    models = dbt_runner.run_all()
-    
-    # for m in models:
-        # logging.info(f"dbt model {m.model_name} ran successfully with status {m.status} and message {m.message}")
-    
+    dbt_runner.run_all()  
     logging.info("--- STAGE 2: Finished ---")
 
 
@@ -206,7 +159,6 @@ def load_all_duckdb_to_bigquery(duckdb_pipeline: Pipeline, db_path: str):
             if not final_tables_to_load:
                  logging.warning(f"None of the specified tables found in the DuckDB schema '{schema_name}'. Skipping Stage 3.")
                  return
-
             logging.info(f"Found {len(final_tables_to_load)} tables to load to BigQuery.")
 
     except duckdb.IOException as e:
@@ -247,8 +199,7 @@ def load_all_duckdb_to_bigquery(duckdb_pipeline: Pipeline, db_path: str):
     )
 
     if final_tables_to_load:
-        info = bigquery_pipeline.run(duckdb_full_source(db_path, schema_name, final_tables_to_load)
-            )
+        info = bigquery_pipeline.run(duckdb_full_source(db_path, schema_name, final_tables_to_load))
         logging.info("--- STAGE 3: Finished ---")
         logging.info(info)
     else:
@@ -268,10 +219,6 @@ def run_full_pipeline(job_id: str):
         # Create the full DSN (connection string) for the dlt destination
         duckdb_dsn = f"duckdb:///{local_db_path}"
 
-        # # Download the DuckDB file from GCS before the pipeline runs
-        # download_from_gcs(GCS_BUCKET_NAME, DUCKDB_FILE_NAME, local_db_path)
-
-        # dlt.config["runtime.log_level"] = "ERROR"
         dlt.config["schema.naming_convention"] = "direct"
 
         mongo_pipeline = dlt.pipeline(
@@ -291,53 +238,7 @@ def run_full_pipeline(job_id: str):
             update_job_status(job_id, "running", "Stage 3: Loading all data from DuckDB to BigQuery.")
             load_all_duckdb_to_bigquery(mongo_pipeline, local_db_path)
         else:
-            # logging.error("Stage 1 (MongoDB to DuckDB) failed. Downstream stages will not run.")
             raise RuntimeError("Stage 1 (MongoDB to DuckDB) failed. Halting pipeline.")
-
-        # update_job_status(job_id, "running", "Stage 4: Performing database maintenance.")
-        # logging.info("\n--- STAGE 4: Performing database maintenance and state upload ---")
-
-        # try:
-        #     logging.info(f"Connecting to {local_db_path} to perform data maintenance...")
-
-        #     schema_name = mongo_pipeline.dataset_name
-
-        #     dlt_state_tables_to_keep = ['_dlt_loads', '_dlt_version', '_dlt_pipeline_state']
-
-        #     with duckdb.connect(local_db_path) as con:
-        #         tables_query = f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema_name}'"
-        #         all_tables_in_schema = [row[0] for row in con.execute(tables_query).fetchall()]
-
-        #         # Determine which tables to drop (i.e., everything EXCEPT the state tables)
-        #         tables_to_clean = [
-        #             tbl for tbl in all_tables_in_schema if tbl not in dlt_state_tables_to_keep
-        #         ]
-            
-        #         if not tables_to_clean:
-        #             logging.warning(f"No temporary data tables found in schema '{schema_name}' to drop.")
-        #         else:
-        #             logging.info(f"Found {len(tables_to_clean)} temporary data tables to drop.")
-        #             for table in tables_to_clean:
-        #                 # logging.info(f"Clearing (DELETE FROM) data table: {schema_name}.{table}")
-        #                 con.execute(f"DELETE FROM {schema_name}.{table};")
-
-        #         logging.info("Table dropping complete. Performing VACUUM to reclaim disk space...")
-        #         con.execute("VACUUM;")
-        #         logging.info("VACUUM command completed successfully.")
-
-        # except Exception as e:
-        #     logging.exception("An error occurred during local database maintenance.")
-        
-        # if os.path.exists(local_db_path):
-        #     try:
-        #         file_size_mb = os.path.getsize(local_db_path) / (1024 * 1024)
-        #         # logging.info(f"Final file size is {file_size_mb:.2f} MB. Uploading state to GCS...")
-        #         update_job_status(job_id, "running", f"Final state size is {file_size_mb:.2f} MB. Uploading to GCS.")
-        #         upload_to_gcs(GCS_BUCKET_NAME, local_db_path, DUCKDB_FILE_NAME)
-        #     except Exception as e:
-        #         # This is a critical failure, log it with the highest severity
-        #         logging.critical(f"FINAL STATE UPLOAD FAILED: The final DuckDB state could not be saved to GCS. {e}")
-        #         raise
 
         update_job_status(job_id, "completed", "Pipeline finished successfully.")
         logging.info("--- Pipeline script finished ---")
