@@ -17,8 +17,8 @@ def load_mongo_to_duckdb(pipeline: Pipeline) -> LoadInfo:
     print("\n--- STAGE 1: Loading data from MongoDB to DuckDB ---")
     source = mongodb()
 
-    initial_start_date = datetime.datetime(2025, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
-    end_date = datetime.datetime(2025, 11, 17, 23, 59, 59, tzinfo=datetime.timezone.utc)
+    initial_start_date = datetime.datetime(2025, 11, 18, 0, 0, 0, tzinfo=datetime.timezone.utc)
+    end_date = datetime.datetime(2025, 11, 19, 23, 59, 59, tzinfo=datetime.timezone.utc)
 
     print(f"Loading data for all incremental tables FROM {initial_start_date.date()} TO {end_date.date()}")
 
@@ -96,7 +96,7 @@ def load_all_duckdb_to_bigquery(duckdb_pipeline: Pipeline):
     tables_to_replace = [
         "houses_duckdb","brands_duckdb","shades_unpivoting_duckdb","shades_duckdb","fcb_sales_shades_duckdb","franchisecbprices_duckdb","access_roles_duckdb","brandcbs_duckdb",
         "customers_duckdb","items_duckdb","categorycbs_duckdb","cities_duckdb","currencies_duckdb","malls_duckdb","markets_duckdb","shops_duckdb","productcbs_duckdb",
-        "subcategorycbs_duckdb","users_duckdb"
+        "subcategorycbs_duckdb","users_duckdb","franchisecbs_duckdb"
     ]
     tables_to_merge = {
         "itemsales_duckdb": "_id",

@@ -7,3 +7,4 @@ google-cloud-storage
 google-auth
 fastapi
 uvicorn[standard]
+google-cloud-bigquery

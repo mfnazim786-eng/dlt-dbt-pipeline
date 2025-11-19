@@ -31,7 +31,7 @@ WITH unpivoted_data AS (
 pivoted_shades AS (
     SELECT
         _id,
-        TRIM(description) AS "description",
+        TRIM(regexp_replace(description, '\s*\n\s*', ' ', 'g')) AS "description",
         division,
         status,
         _dlt_list_idx,

@@ -1,3 +1,9 @@
+# Exclude Google Cloud credentials to prevent security leaks
+My First Project-ff102b9b6008.json
+
+# Exclude the entire dlt state and secrets directory
+.dlt/
+
 # Git and IDE files
 .git/
 .gitignore
