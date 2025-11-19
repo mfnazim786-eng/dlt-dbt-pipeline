@@ -77,7 +77,6 @@ def insert_new_job(job_id: str):
         logging.info(f"Successfully inserted new job with ID: {job_id}")
     except Exception as e:
         logging.error(f"Failed to insert job {job_id} using DML: {e}")
-        # Re-raise the exception so the API endpoint knows something went wrong
         raise
 
 def update_job_status(job_id: str, status: str, details: str = ""):
@@ -95,7 +94,6 @@ def update_job_status(job_id: str, status: str, details: str = ""):
     job_config = bigquery.QueryJobConfig(query_parameters=[
         bigquery.ScalarQueryParameter("status", "STRING", status),
         bigquery.ScalarQueryParameter("details", "STRING", details),
-        # Pass the timestamp AS A STRING. BigQuery will correctly cast it.
         bigquery.ScalarQueryParameter("timestamp", "STRING", timestamp_str),
         bigquery.ScalarQueryParameter("job_id", "STRING", job_id),
     ])

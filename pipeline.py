@@ -72,7 +72,6 @@ def load_mongo_to_duckdb(pipeline: Pipeline) -> LoadInfo:
     """
     Loads collections from the MongoDB database specified in config.toml into the DuckDB destination.
     """
-    # print("\n--- STAGE 1: Loading data from MongoDB to DuckDB ---")
     logging.info("\n--- STAGE 1: Loading data from MongoDB to DuckDB ---")
 
     source = mongodb()
@@ -147,7 +146,6 @@ def load_mongo_to_duckdb(pipeline: Pipeline) -> LoadInfo:
         resource.apply_hints(**hints_to_apply)
 
     info = pipeline.run(source)
-    # print("--- STAGE 1: Finished ---")
     logging.info("--- STAGE 1: Finished ---")
     return info
 
@@ -157,7 +155,6 @@ def transform_data_in_duckdb(dbt_pipeline: Pipeline) -> None:
     """
     Runs the dbt project to transform the raw data in DuckDB.
     """
-    # print("\n--- STAGE 2: Transforming data in DuckDB with dbt ---")
     logging.info("\n--- STAGE 2: Transforming data in DuckDB with dbt ---")
 
     # Use the 'package' helper function to correctly create the dbt runner.
@@ -173,7 +170,6 @@ def transform_data_in_duckdb(dbt_pipeline: Pipeline) -> None:
     # for m in models:
         # logging.info(f"dbt model {m.model_name} ran successfully with status {m.status} and message {m.message}")
     
-    # print("--- STAGE 2: Finished ---")
     logging.info("--- STAGE 2: Finished ---")
 
 
@@ -182,7 +178,6 @@ def load_all_duckdb_to_bigquery(duckdb_pipeline: Pipeline, db_path: str):
     """
     Loads BOTH the raw tables and the transformed dbt models from DuckDB to BigQuery.
     """
-    # print("\n--- STAGE 3: Loading all data from DuckDB to BigQuery ---")
     logging.info("\n--- STAGE 3: Loading all data from DuckDB to BigQuery ---")
 
     tables_to_replace = [
