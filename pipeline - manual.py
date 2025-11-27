@@ -17,8 +17,8 @@ def load_mongo_to_duckdb(pipeline: Pipeline) -> LoadInfo:
     print("\n--- STAGE 1: Loading data from MongoDB to DuckDB ---")
     source = mongodb()
 
-    initial_start_date = datetime.datetime(2025, 11, 18, 0, 0, 0, tzinfo=datetime.timezone.utc)
-    end_date = datetime.datetime(2025, 11, 19, 23, 59, 59, tzinfo=datetime.timezone.utc)
+    initial_start_date = datetime.datetime(2025, 11, 4, 0, 0, 0, tzinfo=datetime.timezone.utc)
+    end_date = datetime.datetime(2025, 11, 5, 23, 59, 59, tzinfo=datetime.timezone.utc)
 
     print(f"Loading data for all incremental tables FROM {initial_start_date.date()} TO {end_date.date()}")
 
